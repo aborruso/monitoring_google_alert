@@ -1,33 +1,28 @@
 # Google Alert Monitoring
 
-This repository provides a template to automatically monitor Google Alerts via GitHub Actions, creating a historical timeline of the results.
+This repository provides a template to automatically monitor Google Alerts via GitHub Actions, creating a historical timeline of the results. It can also be used as a standalone command-line tool to convert a single feed.
 
 ## What is Google Alerts?
 
-[Google Alerts](https://www.google.com/alerts) is a content change detection and notification service. It sends emails or creates web feeds summarizing new web content that matches a user's search terms. One of the delivery options for these notifications is an **RSS feed**, which provides a structured XML file that can be programmatically accessed. This project leverages these RSS feeds.
+[Google Alerts](https://www.google.com/alerts) is a content change detection and notification service. It sends emails or creates web feeds summarizing new web content that matches a user's search terms. One of the delivery options for these notifications is an **RSS feed**, which this project leverages.
 
-## How to Use This Repository
+## Setup for Project-Based Monitoring
 
-This repository is a template that you can use to set up your own monitoring system for any Google Alert feed. The process involves getting your custom RSS feed URLs from Google Alerts and adding them to a configuration file. A GitHub Action will then automatically fetch, process, and store the results daily.
+Follow these steps if you want to use this repository as a template for continuous, daily monitoring.
 
-### Setup Instructions
-
-#### 1. Get Your Google Alert RSS Feed URL
+### 1. Get Your Google Alert RSS Feed URL
 
 1.  Go to [Google Alerts](https://www.google.com/alerts).
-2.  Enter the topic you want to monitor.
-3.  Click on **"Show options"**.
-4.  In the **"Deliver to"** dropdown, select **"RSS feed"**.
-5.  Click **"Create Alert"**.
-6.  An RSS icon will appear next to your alert. Right-click on it and select **"Copy link address"**. This is the URL you will need.
+2.  Enter the topic you want to monitor and click **"Show options"**.
+3.  In the **"Deliver to"** dropdown, select **"RSS feed"** and click **"Create Alert"**.
+4.  Right-click on the RSS icon next to your alert and select **"Copy link address"**.
 
-#### 2. Configure the `config.yml` File
+### 2. Configure the `config.yml` File
 
-1.  Open the `config.yml` file in the root of this repository.
-2.  For each feed you want to monitor, add an entry with the following fields:
-    *   `url_feed`: The RSS feed URL you copied from Google Alerts.
-    *   `title`: A descriptive title for your alert.
-    *   `alias`: A unique, simple name in `snake_case` format (e.g., `my_topic_alert`). This will be added to each record in the output file to identify its source.
+For each feed you want to monitor, add an entry to `config.yml` with the following fields:
+*   `url_feed`: The RSS feed URL you copied.
+*   `title`: A descriptive title for your alert.
+*   `alias`: A unique name in `snake_case` format, used to identify the source of each record.
 
 **Example `config.yml`:**
 
@@ -35,34 +30,42 @@ This repository is a template that you can use to set up your own monitoring sys
 - url_feed: "https://www.google.com/alerts/feeds/..."
   title: "My Custom Alert"
   alias: "my_custom_alert"
-
-- url_feed: "https://www.google.com/alerts/feeds/..."
-  title: "Another Topic"
-  alias: "another_topic"
 ```
 
-#### 3. Run the Monitoring
+### 3. Grant Write Permissions to the GitHub Action
 
-Once you have configured your `config.yml` and pushed it to your own GitHub repository (created from this template), the monitoring will start automatically.
-
-*   **Automatic Updates**: The GitHub Action is scheduled to run every day at 3:00 AM UTC. You can customize this schedule by editing the `cron` expression in `.github/workflows/update.yml`.
-*   **Manual Updates**: You can also trigger the workflow manually by going to the **Actions** tab in your repository, selecting the **"Update Feed"** workflow, and clicking **"Run workflow"**.
-
-#### 4. Grant Write Permissions to the GitHub Action
-
-**Important**: For the workflow to be able to commit the updated `timeline.jsonl` file back to your repository, you must grant it write permissions.
+For the automated workflow to save results back to the repository, you must grant it write permissions.
 
 1.  In your repository, go to **Settings > Actions > General**.
-2.  Scroll down to the **"Workflow permissions"** section.
-3.  Select the **"Read and write permissions"** option.
-4.  Click **"Save"**.
+2.  Scroll to **"Workflow permissions"** and select **"Read and write permissions"**.
+3.  Click **"Save"**.
 
-### Output
+## Usage
 
-The collected data is stored in the `data/timeline.jsonl` file. Each line is a JSON object representing an alert item, enriched with your custom alias:
+This tool can be run in two modes.
 
-```json
-{"alias": "my_custom_alert", "id": "...", "link": "...", "published": "...", "updated": "...", "content": "..."}
+### 1. Batch Mode (for Project Monitoring)
+
+This mode reads the `config.yml` file and updates the `data/timeline.jsonl` timeline. It is intended to be run from within the project directory.
+
+```bash
+# Manually update the timeline
+make update
 ```
 
-This file is automatically sorted and deduplicated on each run.
+The GitHub Action in this repository uses this mode to run automatically every day.
+
+### 2. Single Feed Mode (for Quick Conversion)
+
+Use the `--feed` flag to convert a single RSS feed URL directly to JSONLines. The output is printed to standard output (`stdout`) and is not saved to a file.
+
+```bash
+# Process a single feed and print to the console
+bash script/update_feed.sh --feed "YOUR_GOOGLE_ALERT_RSS_URL"
+```
+
+If you install the script using `make install`, you can use the `google-alert-monitor` command from any location:
+
+```bash
+google-alert-monitor --feed "YOUR_GOOGLE_ALERT_RSS_URL"
+```
