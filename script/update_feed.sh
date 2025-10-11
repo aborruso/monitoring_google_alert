@@ -22,6 +22,7 @@ yq -c '.[]' "${folder}"/../config.yml | while read -r feed; do
     {
       alias: "'"${alias}"'",
       id: .id,
+      title: .title["#text"],
       link: (
         (.link["@href"] | capture("url=(?<real>[^&]+)") | .real)
       ),
