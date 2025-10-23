@@ -21,7 +21,7 @@ if [ "${1:-}" == "--feed" ]; then
   if curl -sL -f "$url_feed" -o "$tmp_xml_file"; then
     # Transform to JSONLines on stdout, without the 'alias' field.
     xq -cr '
-      .feed.entry[] |
+      [.feed.entry] | flatten | .[] |
       {
         id: .id,
         title: .title["#text"],
@@ -68,7 +68,7 @@ yq -c '.[]' "$CONFIG_FILE" | while read -r feed; do
   if curl -sL -f "$url_feed" -o "${folder}/tmp/${alias}.xml"; then
     # If download is successful, parse the XML and append to the timeline.
     xq -cr '
-      .feed.entry[] |
+      [.feed.entry] | flatten | .[] |
       {
         alias: "'"${alias}"'",
         id: .id,
