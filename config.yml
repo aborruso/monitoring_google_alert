@@ -2,3 +2,7 @@
   titolo: "crisi idrica sicilia"
   alias: "crisi_idrica_sicilia"
   query: "crisi idrica sicilia"
+- url_feed: "https://www.google.com/alerts/feeds/15244278077982194024/13386752570261467175"
+  titolo: "Italo Belga Mondello"
+  alias: "italo_belga_mondello"
+  query: "Italo Belga Mondello"
