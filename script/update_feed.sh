@@ -21,13 +21,23 @@ if [ "${1:-}" == "--feed" ]; then
   if curl -sL -f "$url_feed" -o "$tmp_xml_file"; then
     # Transform to JSONLines on stdout, without the 'alias' field.
     xq -cr '
+      def hrefs:
+        if (.link | type) == "array" then
+          [.link[]? | .["@href"]?]
+        else
+          [.link["@href"]?]
+        end;
+      def real_link:
+        (hrefs
+         | map(select(type == "string"))
+         | map(capture("url=(?<real>[^&]+)")? | .real)
+         | map(select(type == "string"))
+         | first);
       [.feed.entry] | flatten | .[] |
       {
         id: .id,
         title: .title["#text"],
-        link: (
-          (.link["@href"] | capture("url=(?<real>[^&]+)") | .real)
-        ),
+        link: (real_link // (hrefs | map(select(type == "string")) | first)),
         published: .published,
         updated: .updated,
         content: .content["#text"]
@@ -68,14 +78,24 @@ yq -c '.[]' "$CONFIG_FILE" | while read -r feed; do
   if curl -sL -f "$url_feed" -o "${folder}/tmp/${alias}.xml"; then
     # If download is successful, parse the XML and append to the timeline.
     xq -cr '
+      def hrefs:
+        if (.link | type) == "array" then
+          [.link[]? | .["@href"]?]
+        else
+          [.link["@href"]?]
+        end;
+      def real_link:
+        (hrefs
+         | map(select(type == "string"))
+         | map(capture("url=(?<real>[^&]+)")? | .real)
+         | map(select(type == "string"))
+         | first);
       [.feed.entry] | flatten | .[] |
       {
         alias: "'"${alias}"'",
         id: .id,
         title: .title["#text"],
-        link: (
-          (.link["@href"] | capture("url=(?<real>[^&]+)") | .real)
-        ),
+        link: (real_link // (hrefs | map(select(type == "string")) | first)),
         published: .published,
         updated: .updated,
         content: .content["#text"]
